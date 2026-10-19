@@ -491,25 +491,120 @@
       .status-row .clearance { color: var(--accent); }
       .status-row .clock { margin-left: auto; color: var(--teal); white-space: nowrap; }
 
+      /* Mobile-only chrome: hidden on desktop, shown at narrow widths. */
+      .mobile-bar { display: none; }
+      .drawer-backdrop { display: none; }
+      .drawer-close { display: none; }
+      .foot-toggle { display: none; }
+
       @media (prefers-reduced-motion: reduce) {
         .scanlines { animation: none; }
         .ticker-track { animation: none; }
         #map.glitching { animation: none; }
         .boot-line { animation-duration: 0.01s; }
+        .sidebar, .drawer-backdrop { transition: none; }
       }
 
       @media (max-width: 760px) {
-        .layout { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) 1fr; }
-        .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
-        .masthead { padding: 12px 16px 8px; }
-        .masthead h1 { font-size: 19px; }
-        .masthead .sub { font-size: 12.5px; }
-        .controls { padding: 8px 16px; }
-        .list-label { padding: 8px 16px 0; }
-        .sidebar-foot { display: none; }
+        /* One column: the map takes everything between the compact bar
+           up top and the collapsed terminal foot below. */
+        .layout { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr); }
+
+        /* Compact mobile bar: one-line title, panel buttons. */
+        .mobile-bar {
+          display: flex; align-items: center; gap: 10px;
+          flex: none;
+          padding: 6px 10px;
+          background: #04060a;
+          border-bottom: 1px solid var(--line);
+          position: relative; z-index: 700;
+        }
+        .mobile-bar .mb-title {
+          font-family: "Chakra Petch", sans-serif;
+          font-size: 13px; font-weight: 700;
+          letter-spacing: 0.05em; text-transform: uppercase;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          line-height: 1.1; min-width: 0;
+        }
+        .mobile-bar .mb-title .bean { color: var(--accent); }
+        .mobile-bar .mb-sponsor {
+          display: block;
+          font-family: "Share Tech Mono", ui-monospace, monospace;
+          font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+          color: var(--teal); margin-top: 2px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mobile-bar .mb-btns { display: flex; gap: 6px; margin-left: auto; flex: none; }
+        .mb-btn {
+          font-family: "Share Tech Mono", ui-monospace, monospace;
+          font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--ink);
+          background: var(--panel-bg-2);
+          border: 1px solid var(--line);
+          border-radius: 4px;
+          padding: 6px 8px;
+          cursor: pointer;
+        }
+        .mb-btn:active { background: var(--row-active); color: var(--accent); }
+
+        /* Sidebar becomes a slide-over drawer, hidden by default. */
+        .sidebar {
+          position: fixed; top: 0; left: 0; bottom: 0;
+          width: min(320px, 86vw);
+          transform: translateX(-105%);
+          transition: transform 0.28s ease;
+          box-shadow: var(--shadow);
+          z-index: 1200;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+        body.drawer-open .sidebar { transform: translateX(0); }
+        .drawer-backdrop {
+          display: block;
+          position: fixed; inset: 0; z-index: 1100;
+          background: rgba(2, 4, 6, 0.62);
+          opacity: 0; visibility: hidden;
+          transition: opacity 0.28s ease, visibility 0.28s;
+        }
+        body.drawer-open .drawer-backdrop { opacity: 1; visibility: visible; }
+        .drawer-close {
+          display: block;
+          position: absolute; top: 6px; right: 8px;
+          font: inherit; font-size: 20px; line-height: 1;
+          background: none; border: 0; color: var(--ink-faint);
+          padding: 6px 8px; cursor: pointer; z-index: 2;
+        }
+        .masthead { padding: 10px 36px 8px 14px; }
+        .masthead h1 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .masthead .sponsor { font-size: 10px; margin-top: 5px; }
+        .masthead .sub { display: none; }
+        .controls { padding: 8px 14px; }
+        .list-label { padding: 8px 14px 0; }
+        .district-list { flex: none; overflow: visible; padding: 8px 6px 12px; }
+        .sidebar-foot { padding: 10px 14px 16px; }
+
+        /* Footer collapses to a thin bar: toggle + live clock only. */
+        .foot-toggle {
+          display: inline-flex; align-items: center; gap: 5px;
+          font: inherit; font-size: 11px; letter-spacing: 0.06em;
+          color: var(--accent);
+          background: none; border: 1px solid var(--line); border-radius: 4px;
+          padding: 2px 8px; cursor: pointer; flex: none;
+        }
+        .terminal-foot:not(.foot-open) .ticker { display: none; }
+        .terminal-foot:not(.foot-open) .status-row > span:not(.clock) { display: none; }
+        /* Collapsed bar shows the bare time; the full local label
+           returns when the foot is expanded. */
+        .terminal-foot:not(.foot-open) .clock-full { display: none; }
+        .status-row { flex-wrap: nowrap; gap: 8px; padding: 5px 10px; }
+        .terminal-foot.foot-open .status-row { flex-wrap: wrap; }
+        .status-row .clock { margin-left: auto; }
+
         .info-note { bottom: 14px; }
-        .status-row { gap: 2px 12px; padding: 5px 10px; }
-        .status-row .clock { margin-left: 0; }
+      }
+
+      @media (max-width: 420px) {
+        .mobile-bar .mb-sponsor { display: none; }
       }
     </style>
   </head>
@@ -525,8 +620,18 @@
       </div>
     </div>
     <div class="scanlines" aria-hidden="true"></div>
+    <div class="mobile-bar">
+      <div class="mb-title">New Angeles <span class="bean">Municipal Atlas</span><span class="mb-sponsor">A Weyland Consortium public service</span></div>
+      <nav class="mb-btns" aria-label="Atlas panels">
+        <button type="button" class="mb-btn" data-drawer="drawer-index">Index</button>
+        <button type="button" class="mb-btn" data-drawer="drawer-controls">Feeds</button>
+        <button type="button" class="mb-btn" data-drawer="drawer-record">Record</button>
+      </nav>
+    </div>
+    <div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true"></div>
     <div class="layout">
       <aside class="sidebar" id="sidebar" aria-label="Municipal atlas terminal — districts of New Angeles">
+        <button type="button" class="drawer-close" id="drawer-close" aria-label="Close panel">&times;</button>
         <div class="masthead">
           <h1>New Angeles <span class="bean">Municipal Atlas</span></h1>
           <p class="sponsor">A Weyland Consortium public service &middot; NBN cartographic feed</p>
@@ -537,7 +642,7 @@
           </p>
         </div>
 
-        <div class="controls">
+        <div class="controls" id="drawer-controls">
           <input class="search" id="search" type="search" placeholder="QUERY ATLAS — filter districts&hellip;" aria-label="Query atlas: filter districts" />
           <p class="feeds-label" id="feeds-label">OVERLAY FEEDS</p>
           <div class="layer-toggles" role="group" aria-labelledby="feeds-label">
@@ -551,11 +656,11 @@
           </div>
         </div>
 
-        <p class="list-label">DISTRICT INDEX — TWELVE ENTRIES ON FILE</p>
+        <p class="list-label" id="drawer-index">DISTRICT INDEX — TWELVE ENTRIES ON FILE</p>
         <ul class="district-list" id="district-list"></ul>
         <p class="no-results" id="no-results">No match in the municipal record.</p>
 
-        <div class="sidebar-foot">
+        <div class="sidebar-foot" id="drawer-record">
           <details>
             <summary>City record</summary>
             <p>
@@ -656,7 +761,7 @@
       </div>
     </div>
 
-    <footer class="terminal-foot">
+    <footer class="terminal-foot" id="terminal-foot">
       <div class="ticker" aria-label="NBN news ticker">
         <span class="ticker-brand">NBN NEWS</span>
         <div class="ticker-view">
@@ -664,10 +769,11 @@
         </div>
       </div>
       <div class="status-row">
+        <button type="button" class="foot-toggle" id="foot-toggle" aria-expanded="false" aria-controls="terminal-foot">&#9656; NBN FEED</button>
         <span class="clearance">CLEARANCE: PUBLIC</span>
         <span>&copy; 20XX Weyland Consortium. All rights reserved.</span>
         <span>Unauthorized access prohibited.</span>
-        <span class="clock">NEW ANGELES LOCAL <span id="na-date"></span> &middot; <span id="na-clock">--:--:--</span></span>
+        <span class="clock"><span class="clock-full">NEW ANGELES LOCAL <span id="na-date"></span> &middot; </span><span id="na-clock">--:--:--</span></span>
       </div>
     </footer>
 
@@ -1032,6 +1138,54 @@
             "</div>";
         }
 
+        /* ---------- Mobile drawers & collapsible footer ----------
+           On narrow screens the sidebar is a slide-over drawer and the
+           terminal foot collapses to a thin bar; on desktop these
+           controls are hidden and the calls below are inert. */
+        var mobileMq = window.matchMedia("(max-width: 760px)");
+        var sidebarEl = document.getElementById("sidebar");
+        function openDrawer(targetId) {
+          document.body.classList.add("drawer-open");
+          /* Scroll the drawer itself to the requested section. Deliberately
+             not scrollIntoView: the drawer sits off-canvas under a transform,
+             and scrollIntoView would drag the whole page sideways with it. */
+          if (targetId && sidebarEl) {
+            var target = document.getElementById(targetId);
+            if (target) {
+              var y = 0, el = target;
+              while (el && el !== sidebarEl) { y += el.offsetTop; el = el.offsetParent; }
+              sidebarEl.scrollTop = y;
+            }
+          }
+          window.scrollTo(0, 0);
+        }
+        function closeDrawer() { document.body.classList.remove("drawer-open"); }
+        var drawerBtns = document.querySelectorAll("[data-drawer]");
+        for (var dbi = 0; dbi < drawerBtns.length; dbi++) {
+          drawerBtns[dbi].addEventListener("click", function () {
+            openDrawer(this.getAttribute("data-drawer"));
+          });
+        }
+        var backdropEl = document.getElementById("drawer-backdrop");
+        if (backdropEl) backdropEl.addEventListener("click", closeDrawer);
+        var drawerCloseEl = document.getElementById("drawer-close");
+        if (drawerCloseEl) drawerCloseEl.addEventListener("click", closeDrawer);
+        document.addEventListener("keydown", function (ev) {
+          if (ev.key === "Escape") closeDrawer();
+        });
+
+        var footEl = document.getElementById("terminal-foot");
+        var footToggle = document.getElementById("foot-toggle");
+        if (footToggle && footEl) {
+          footToggle.addEventListener("click", function () {
+            var open = footEl.classList.toggle("foot-open");
+            footToggle.setAttribute("aria-expanded", open ? "true" : "false");
+            footToggle.innerHTML = open ? "&#9662; NBN FEED" : "&#9656; NBN FEED";
+            /* The map's box just changed height; let Leaflet refill it. */
+            setTimeout(function () { if (map) map.invalidateSize(); }, 80);
+          });
+        }
+
         /* ---------- Sidebar list (built first; works even if the map library fails) ---------- */
         var listEl = document.getElementById("district-list");
         var infoNote = document.getElementById("info-note");
@@ -1125,7 +1279,10 @@
             "<span><span class=\"name\">" + esc(d.name) + "</span>" +
             "<span class=\"tag\">" + esc(d.tag) + "</span></span>" +
             "<span class=\"kind\">" + esc(d.kind) + "</span>";
-          btn.addEventListener("click", function () { selectDistrict(d.id, true); });
+          btn.addEventListener("click", function () {
+            selectDistrict(d.id, true);
+            if (mobileMq.matches) closeDrawer();
+          });
           li.appendChild(btn);
           listEl.appendChild(li);
           rows[d.id] = btn;
